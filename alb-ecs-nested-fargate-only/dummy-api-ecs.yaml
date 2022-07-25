@@ -6,14 +6,30 @@ Parameters:
     Description: VpcId of your existing Virtual Private Cloud (VPC)
     ConstraintDescription: must be the VPC Id of an existing Virtual Private Cloud.
 
-  ECSClusterStackTemplateURL:
-    Description: URL of the nested stack template
-    Type: String
-
   Subnets:
     Type: List<AWS::EC2::Subnet::Id>
     Description: The list of SubnetIds in your Virtual Private Cloud (VPC)
     ConstraintDescription: must be a list of at least two existing subnets associated with at least two different availability zones. They should be residing in the selected Virtual Private Cloud.
+
+  ECSClusterStackTemplateURL:
+    Description: URL of the nested stack template
+    Type: String
+
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+      - Label:
+          default: "Network Configuration"
+        Parameters:
+          - VpcId
+          - Subnets
+      - Label:
+          default: "Stack Configuration"
+        Parameters:
+          - ECSClusterStackTemplateURL
+    ParameterLabels:
+      Subnets:
+        default: "Which subnets should this be deployed to?"
 
 Resources:
   ECSClusterStack:
@@ -28,8 +44,15 @@ Resources:
     Type: AWS::ECS::TaskDefinition
     Properties:
       ContainerDefinitions:
-        - Name: node-api-cnt
-          Image: mwlodarczyk/node-api
+        - LogConfiguration:
+            Options:
+              awslogs-group: /ecs/udemy-nginxdemo-td
+              awslogs-region: eu-central-1
+              awslogs-stream-prefix: ecs
+              awslogs-create-group: 'true'
+            LogDriver: awslogs
+          Name: node-api-cnt
+          Image: mwlodarczyk/node-api:amd64
           Essential: true
           PortMappings:
             - ContainerPort: 80
@@ -55,7 +78,6 @@ Resources:
           Base: 0
           Weight: 1
       TaskDefinition: !Ref ECSTaskDefinition # other example
-      # ServiceName: dummy-api-service
       DesiredCount: 1
       LoadBalancers:
         - ContainerName: node-api-cnt
@@ -119,3 +141,8 @@ Resources:
       Scheme: internet-facing
       IpAddressType: ipv4
       Type: application
+
+Outputs:
+  ApplicationLoadBalancerURL:
+    Description: ApplicationLoadBalancer DNS URL
+    Value: !GetAtt ApplicationLoadBalancer.DNSName

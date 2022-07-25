@@ -11,7 +11,7 @@ Supports only HTTP requests that are being forwarded to Target Group containing 
 EC2 instances are created based on the latest image available in the region. This template allows the selection of Virtual Private Cloud (VPC) and a list of subnets.
 
 
-- [ecs-cluster.yaml](ecs-cluster.yaml)
+- [ecs-cluster.yaml](alb-ecs-nested/ecs-cluster.yaml)
 
 This file contains a basic ECS Cluster configuration. Cluster support all kinds of CapacityProviders: `FARGATE` / `FARGATE_SPOT` and `EC2 INSTANCE`. EC2 instances are automatically created based on LaunchTemplate and the latest recommended ECS-optimized AMI. It is possible to select different InstanceTypes (t2.micro is a default value).
 
@@ -19,6 +19,8 @@ Important note:
 If EC2 launch type is used, instances must have correct IamInstanceProfile associated. 
 The default profile is automatically created for you when completing the Amazon ECS console first-run experience and has the following format: "arn:aws:iam::[AWS::AccountId]:instance-profile/ecsInstanceRole" 
 if this profile doesn't exist it is possible to create it manually, for more details refer to [official documentation](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/instance_IAM_role.html)
+
+`alb-ecs-nested-farget-only` directory contains a necessary configuration to deploy a simple NodeJS API using ECS.
 
 ## TO-DO
 
@@ -51,3 +53,18 @@ EC2 Instance Profile (EC2 Launch Type only):
 ECS Task Role:
 - Each task can have a specific role to access different services (S3, Dynamo DB etc.)
 
+Service creation:
+1. Create Task definition (how to create ECS task)
+2. Create SG for ALB
+3. Create SG for ECS Task
+
+## Dummy Apps
+
+### Build & Run
+
+```bash
+# Apple M1 is ARM-based systems, to run on AWS need to build for AMD64
+docker build . --platform=linux/amd64 -t mwlodarczyk/node-api
+docker run --rm -p 7501:80 -d mwlodarczyk/node-api
+docker push mwlodarczyk/node-api
+```
