@@ -83,3 +83,6 @@ Outputs:
   ECSCluster:
     Description: The created cluster.
     Value: !Ref ECSCluster
+  EC2CapacityProvider:
+    Description: Custom EC2 CapacityProvider
+    Value: !Ref EC2CapacityProvider
