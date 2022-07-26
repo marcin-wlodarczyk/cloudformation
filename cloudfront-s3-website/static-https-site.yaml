@@ -1,0 +1,75 @@
+AWSTemplateFormatVersion: 2010-09-09
+
+Parameters:
+  Domain:
+    Type: String
+    Description: Hosted zone of your existing domain. (e.g "mydomain.com")
+  DistributionOriginId:
+    Type: String
+    Default: 'S3OriginWebsite'
+    Description: Use this value to specify the TargetOriginId in a CacheBehavior or DefaultCacheBehavior.
+    ConstraintDescription: A unique identifier for the origin. This value must be unique within the distribution.
+
+Resources:
+  ReadPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref S3Website
+      PolicyDocument:
+        Statement:
+          - Action: s3:GetObject
+            Effect: Allow
+            Resource: !Join ['', [ 'arn:aws:s3:::', !Ref S3Website, '/*' ]]
+            Principal:
+              CanonicalUser: !GetAtt OriginAccessId.S3CanonicalUserId
+
+  OriginAccessId:
+    Type: AWS::CloudFront::CloudFrontOriginAccessIdentity
+    Properties:
+      CloudFrontOriginAccessIdentityConfig:
+        Comment: Allow CloudFront to access S3 bucket
+
+  CloudFrontDistribution:
+    Type: AWS::CloudFront::Distribution
+    Properties:
+      DistributionConfig:
+        Origins:
+          - DomainName: !GetAtt S3Website.DomainName
+            Id: !Ref DistributionOriginId
+            S3OriginConfig:
+              OriginAccessIdentity: !Sub 'origin-access-identity/cloudfront/${OriginAccessId}'
+        DefaultRootObject: index.html
+        Enabled: true
+        DefaultCacheBehavior:
+          AllowedMethods:
+            - GET
+            - HEAD
+            - OPTIONS
+          TargetOriginId: !Ref DistributionOriginId
+          ForwardedValues:
+            QueryString: 'false'
+            Cookies:
+              Forward: none
+          ViewerProtocolPolicy: allow-all # TODO: Change to "redirect-to-https"
+        PriceClass: PriceClass_100 # More about it here -> https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/PriceClass.html
+
+  S3Website:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub '${Domain}' # Use same bucket name as domain
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+
+  DNSRecords:
+    Type: AWS::Route53::RecordSetGroup
+    Properties:
+      HostedZoneName: !Join ['', [!Ref Domain, '.']]
+      RecordSets:
+        - Name: !Sub 'mwlodarczyk.${Domain}.'
+          Type: A
+          TTL: 10
+          ResourceRecords:
+            - 11.22.33.66
