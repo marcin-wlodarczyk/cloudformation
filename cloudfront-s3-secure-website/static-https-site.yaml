@@ -73,6 +73,7 @@ Resources:
             - HEAD
             - OPTIONS
           TargetOriginId: !Ref DistributionOriginId
+          CachePolicyId: '658327ea-f89d-4fab-a63d-7e88639e58f6' # From docs https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/using-managed-cache-policies.html
           ViewerProtocolPolicy: redirect-to-https
         PriceClass: PriceClass_100 # More about it here -> https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/PriceClass.html
         ViewerCertificate:

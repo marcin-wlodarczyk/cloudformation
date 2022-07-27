@@ -11,6 +11,14 @@ This template consists of secure static website deployment using:
 ## Architecture
 ![AWS Architecture](architecture.svg "Architecture")
 
+## Content Delivery Network (CDN)
+- Improves read performance (content is cached at the edge location)
+- DDoS protection, integration with Shield, AWS Web Firewall
+
+![AWS CDN](cdn-edge-locations.svg "CDN")
+
+[AWS Reference](https://aws.amazon.com/cloudfront/features/?nc=sn&loc=2&whats-new-cloudfront.sort-by=item.additionalFields.postDateTime&whats-new-cloudfront.sort-order=desc)
+
 ## Necessary pre-deployment steps:
 - You should own a domain and manually register a new "Hosted Zone" using Route 53. If your domain hasn't been registered with Amazon make sure to properly configure Name servers in your domain registrar
 SSL/TLS certificate is managed by ACM, however, this service is available only in `us-east-1` region. You should manually request a new certificate through the console and take note of the certificate ARN, CNAME name, and CNAME value (those values are required CloudFormation template's parameters)
