@@ -9,6 +9,31 @@ Parameters:
     Default: 'S3OriginWebsite'
     Description: Use this value to specify the TargetOriginId in a CacheBehavior or DefaultCacheBehavior.
     ConstraintDescription: A unique identifier for the origin. This value must be unique within the distribution.
+  AcmCertificateArn:
+    Type: String
+  AcmCertificateCNAME:
+    Type: String
+    Description: When you choose DNS validation, ACM provides you with one or more CNAME records that must be added to this database. These records contain a unique key-value pair that serves as proof that you control the domain.
+  AcmCertificateCNAMEValue:
+    Type: String
+
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+      - Label:
+          default: "Domain Configuration"
+        Parameters:
+          - Domain
+          - DistributionOriginId
+      - Label:
+          default: "AWS Certificate Manager SSL/TLS Configuration"
+        Parameters:
+          - AcmCertificateArn
+          - AcmCertificateCNAME
+          - AcmCertificateCNAMEValue
+    ParameterLabels:
+      AcmCertificateArn:
+        default: "Request a public SSL/TLS certificate and copy its ARN here"
 
 Resources:
   ReadPolicy:
@@ -33,8 +58,10 @@ Resources:
     Type: AWS::CloudFront::Distribution
     Properties:
       DistributionConfig:
+        Aliases:
+          - !Ref Domain
         Origins:
-          - DomainName: !GetAtt S3Website.DomainName
+          - DomainName: !GetAtt S3Website.RegionalDomainName
             Id: !Ref DistributionOriginId
             S3OriginConfig:
               OriginAccessIdentity: !Sub 'origin-access-identity/cloudfront/${OriginAccessId}'
@@ -46,12 +73,12 @@ Resources:
             - HEAD
             - OPTIONS
           TargetOriginId: !Ref DistributionOriginId
-          ForwardedValues:
-            QueryString: 'false'
-            Cookies:
-              Forward: none
-          ViewerProtocolPolicy: allow-all # TODO: Change to "redirect-to-https"
+          ViewerProtocolPolicy: redirect-to-https
         PriceClass: PriceClass_100 # More about it here -> https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/PriceClass.html
+        ViewerCertificate:
+          AcmCertificateArn: !Ref AcmCertificateArn
+          MinimumProtocolVersion: TLSv1
+          SslSupportMethod: sni-only # recommended
 
   S3Website:
     Type: AWS::S3::Bucket
@@ -68,8 +95,13 @@ Resources:
     Properties:
       HostedZoneName: !Join ['', [!Ref Domain, '.']]
       RecordSets:
-        - Name: !Sub 'mwlodarczyk.${Domain}.'
+        - Name: !Join ['', [!Ref Domain, '.']]
           Type: A
-          TTL: 10
+          AliasTarget:
+            DNSName: !GetAtt CloudFrontDistribution.DomainName
+            HostedZoneId: Z2FDTNDATAQYW2 # Static value from docs: https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-route53-aliastarget-1.html#cfn-route53-aliastarget-hostedzoneid
+        - Name: !Ref AcmCertificateCNAME # SSL Domain validation
+          Type: CNAME
+          TTL: 300
           ResourceRecords:
-            - 11.22.33.66
+            - !Ref AcmCertificateCNAMEValue

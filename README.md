@@ -1,4 +1,4 @@
-# cloudformation
+# Cloud Formation
 
 This repository consists of reusable Cloud Formation Templates.
 
@@ -21,6 +21,9 @@ The default profile is automatically created for you when completing the Amazon 
 if this profile doesn't exist it is possible to create it manually, for more details refer to [official documentation](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/instance_IAM_role.html)
 
 `alb-ecs-nested-farget-only` directory contains a necessary configuration to deploy a simple NodeJS API using ECS.
+
+- [CloudFront S3 Secure Website](cloudfront-s3-secure-website/README.md)
+
 
 ## TO-DO
 
@@ -67,4 +70,22 @@ Service creation:
 docker build . --platform=linux/amd64 -t mwlodarczyk/node-api
 docker run --rm -p 7501:80 -d mwlodarczyk/node-api
 docker push mwlodarczyk/node-api
+```
+
+## AWS CLI
+
+```bash
+aws --region eu-central-1 cloudformation create-stack \
+--stack-name test-dns \
+--template-body file://static-https-site.yaml \
+--parameters file://parameters.json
+
+aws --region us-east-1 \
+cloudformation update-stack \
+--stack-name my-stack \
+--template-body file://2-adding-access-control.yaml
+
+aws --region eu-central-1 cloudformation list-stacks
+
+aws --region eu-central-1 cloudformation delete-stack --stack-name test-dns
 ```

@@ -1,0 +1,18 @@
+[
+  {
+    "ParameterKey": "Domain",
+    "ParameterValue": "overoute.io"
+  },
+  {
+    "ParameterKey": "AcmCertificateArn",
+    "ParameterValue": "arn:aws:acm:us-east-1:904330416988:certificate/aeb1be98-b460-4b9a-ada8-ae5f5b16cc9e"
+  },
+  {
+    "ParameterKey": "AcmCertificateCNAME",
+    "ParameterValue": "_1eec9a66be20fef7a90aaf1e1e3f96ae.overoute.io."
+  },
+  {
+    "ParameterKey": "AcmCertificateCNAMEValue",
+    "ParameterValue": "_c38ba2b06e6c51a8fbb875eed9c415ca.vrztfgqhxj.acm-validations.aws."
+  }
+]
