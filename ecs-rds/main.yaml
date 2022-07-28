@@ -1,0 +1,67 @@
+AWSTemplateFormatVersion: 2010-09-09
+
+Parameters:
+  ECSClusterStackTemplateURL:
+    Type: String
+
+  APIStackTemplateURL:
+    Type: String
+
+  ALBStackTemplateURL:
+    Type: String
+
+  RDSStackTemplateURL:
+    Type: String
+
+  VpcId:
+    Type: AWS::EC2::VPC::Id
+    Description: VpcId of your existing Virtual Private Cloud (VPC)
+    ConstraintDescription: must be the VPC Id of an existing Virtual Private Cloud.
+
+  Subnets:
+    Type: List<AWS::EC2::Subnet::Id>
+    Description: The list of SubnetIds in your Virtual Private Cloud (VPC). Selected subnets will be associated with AutoScalingGroup
+    ConstraintDescription: must be a list of at least two existing subnets associated with at least two different availability zones. They should be residing in the selected Virtual Private Cloud.
+
+Resources:
+  ECSClusterStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Ref ECSClusterStackTemplateURL
+      TimeoutInMinutes: 10
+      Parameters:
+        VpcId: !Ref VpcId
+        Subnets: !Join [',', !Ref Subnets]
+
+  ALBStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Ref ALBStackTemplateURL
+      TimeoutInMinutes: 10
+      Parameters:
+        VpcId: !Ref VpcId
+        Subnets: !Join [',', !Ref Subnets]
+        ECSCluster: !GetAtt ECSClusterStack.Outputs.ECSCluster
+
+  RDSStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Ref RDSStackTemplateURL
+      TimeoutInMinutes: 10
+      Parameters:
+        Subnets: !Join [',', !Ref Subnets]
+        DBName: mydb
+        MasterUsername: root
+        MasterUserPassword: password
+
+  APIStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Ref APIStackTemplateURL
+      TimeoutInMinutes: 10
+      Parameters:
+        Subnets: !Join [',', !Ref Subnets]
+        ECSCluster: !GetAtt ECSClusterStack.Outputs.ECSCluster
+        ALBTargetGroup: !GetAtt ALBStack.Outputs.ALBTargetGroup
+        ALBSecurityGroupId: !GetAtt ALBStack.Outputs.ALBSecurityGroupId
+

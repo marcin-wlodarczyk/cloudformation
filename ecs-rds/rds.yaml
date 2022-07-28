@@ -1,0 +1,54 @@
+AWSTemplateFormatVersion: 2010-09-09
+
+Parameters:
+  Subnets:
+    Type: List<AWS::EC2::Subnet::Id>
+    Description: The list of SubnetIds in your Virtual Private Cloud (VPC). Selected subnets will be associated with AutoScalingGroup
+    ConstraintDescription: must be a list of at least two existing subnets associated with at least two different availability zones. They should be residing in the selected Virtual Private Cloud.
+
+  DBName:
+    Type: String
+
+  MasterUsername:
+    Type: String
+
+  MasterUserPassword:
+    Type: String
+
+Resources:
+  RDSSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Open database for access
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 3306
+          ToPort: 3306
+          CidrIp: 0.0.0.0/0
+
+  DBSubnetGroup:
+    Type: AWS::RDS::DBSubnetGroup
+    Properties:
+      DBSubnetGroupDescription: DB Subnet group
+      SubnetIds: !Ref Subnets
+
+  RDSDatabase:
+    Type: AWS::RDS::DBInstance
+    Properties:
+      VPCSecurityGroups:
+        - !GetAtt RDSSecurityGroup.GroupId
+      AllocatedStorage: 20
+      MaxAllocatedStorage: 50
+      DBInstanceClass: db.t2.micro
+      Engine: MySQL
+      EngineVersion: 8.0
+      StorageType: gp2
+      MultiAZ: false
+      Port: 3306
+      # DeletionProtection: true
+      PubliclyAccessible: true
+      DBSubnetGroupName: !Ref DBSubnetGroup
+      DBName: !Ref DBName
+      MasterUsername: !Ref MasterUsername
+      MasterUserPassword: !Ref MasterUserPassword
+    DeletionPolicy: Delete # Snapshot

@@ -1,0 +1,26 @@
+[
+  {
+    "ParameterKey": "VpcId",
+    "ParameterValue": "vpc-0cc4235ce655c512c"
+  },
+  {
+    "ParameterKey": "Subnets",
+    "ParameterValue": "subnet-0ca367075df3986de,subnet-01dd77ba831775791,subnet-0da6c6ced8a599a55"
+  },
+  {
+    "ParameterKey": "ECSClusterStackTemplateURL",
+    "ParameterValue": "https://mwlodarczyk-templates.s3.eu-central-1.amazonaws.com/ecs-rds/ecs.yaml"
+  },
+  {
+    "ParameterKey": "APIStackTemplateURL",
+    "ParameterValue": "https://mwlodarczyk-templates.s3.eu-central-1.amazonaws.com/ecs-rds/api.yaml"
+  },
+  {
+    "ParameterKey": "ALBStackTemplateURL",
+    "ParameterValue": "https://mwlodarczyk-templates.s3.eu-central-1.amazonaws.com/ecs-rds/alb.yaml"
+  },
+  {
+    "ParameterKey": "RDSStackTemplateURL",
+    "ParameterValue": "https://mwlodarczyk-templates.s3.eu-central-1.amazonaws.com/ecs-rds/rds.yaml"
+  }
+]

@@ -1,0 +1,83 @@
+AWSTemplateFormatVersion: 2010-09-09
+
+Parameters:
+  Subnets:
+    Type: List<AWS::EC2::Subnet::Id>
+    Description: The list of SubnetIds in your Virtual Private Cloud (VPC)
+    ConstraintDescription: must be a list of at least two existing subnets associated with at least two different availability zones. They should be residing in the selected Virtual Private Cloud.
+
+  ECSCluster:
+    Type: String
+
+  ALBTargetGroup:
+    Type: String
+
+  ALBSecurityGroupId:
+    Type: String
+
+Resources:
+  ECSTaskDefinition:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      ContainerDefinitions:
+        - LogConfiguration:
+            Options:
+              awslogs-group: /ecs/udemy-nginxdemo-td
+              awslogs-region: eu-central-1
+              awslogs-stream-prefix: ecs
+              awslogs-create-group: 'true'
+            LogDriver: awslogs
+          Name: node-api-cnt
+          Image: mwlodarczyk/node-api:amd64
+          Essential: true
+          PortMappings:
+            - ContainerPort: 80
+              Protocol: tcp
+          EnvironmentFiles: []
+      Family: udemy-nginxdemo-td
+      NetworkMode: awsvpc
+      RequiresCompatibilities:
+        - FARGATE
+      Cpu: 0.5 vCPU
+      Memory: 1 GB
+      ExecutionRoleArn: 'arn:aws:iam::904330416988:role/ecsTaskExecutionRole'
+      RuntimePlatform:
+        CpuArchitecture: X86_64
+        OperatingSystemFamily: LINUX
+  ECSService:
+    Type: AWS::ECS::Service
+    Properties:
+      Cluster: !Ref ECSCluster
+      CapacityProviderStrategy:
+        - CapacityProvider: FARGATE
+          Base: 0
+          Weight: 1
+      TaskDefinition: !Ref ECSTaskDefinition # other example
+      DesiredCount: 1
+      LoadBalancers:
+        - ContainerName: node-api-cnt
+          ContainerPort: 80
+          LoadBalancerName: !Ref AWS::NoValue
+          TargetGroupArn: !Ref ALBTargetGroup
+      HealthCheckGracePeriodSeconds: 20
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          AssignPublicIp: ENABLED
+          SecurityGroups:
+            - !GetAtt TaskSecurityGroup.GroupId
+          Subnets: !Ref Subnets
+      PlatformVersion: LATEST
+      DeploymentConfiguration:
+        MaximumPercent: 200
+        MinimumHealthyPercent: 100
+      DeploymentController:
+        Type: ECS
+  TaskSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Allow HTTP from ALB
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          SourceSecurityGroupId: !Ref ALBSecurityGroupId
